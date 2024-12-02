@@ -45,10 +45,11 @@ selectPenguin <- function(penguin){
     bMass <- mean(bMass)
     
     sizeData <- data.frame(cLength,cDepth,fLength,bMass)
+    colnames(sizeData) <- c("Culmen Length (mm)","Culmen Depth (mm)","Flipper Length (mm)","Body Mass (g)")
     sizeData
    }
    
-   penguinSize <- penAvg(100) #<- change number to get a different average of penguin data
+   penguinSize <- penAvg(10) #<- change number to get a different average of penguin data
                               # as N grows the penguin will be more average 
    penguinData <- data.frame(Island,penguinSize,gender)
    penguinData
@@ -57,22 +58,23 @@ selectPenguin <- function(penguin){
 #pulling penguin
 test<- selectPenguin(AdeliePenguinFemale)
 
-artificalPenguin <-function(n,penguin){
-  df <- data.frame(Island=character(),
-                   `Culmen Length (mm)`=num(),
-                   `Culmen Depth (mm)`=num(),
-                   `Flipper Length (mm)`=num(),
-                   `Body Mass (g)`=num(),
-                   Sex=chrcharacter())
-  
-  
-  for(p in 1:n){
-    
-    pen <- selectPenguin(penguin)
-    df <- df |> add_row(pen)
-    
-  }
-  
-}
+# This will add a penguin to a new data frame
+penguinData <- data.frame(matrix(nrow =1,ncol=6))
 
-artDat <- artificalPenguin(10,AdeliePenguin)
+artificalPenguin <-function(penguin){
+    pen <- selectPenguin(penguin)
+   #penguinData <- bind_rows(penguinData,data.frame(pen))
+    pen
+}
+#repilcated penguins to be put combined with other data
+repdata <- replicate(10,artificalPenguin(AdeliePenguin))
+repdata <- matrix(unlist(repdata),ncol =6,byrow = TRUE)
+
+repdata <- as_tibble(repdata) |> set_names(c("Island","Culmen Length (mm)","Culmen Depth (mm)","Flipper Length (mm)","Body Mass (g)","Sex"))
+
+repdata <- as.data.frame(repdata)
+
+artData<- bind_rows(AdeliePenguin,repdata)
+
+#make columns numeric and stuff
+
