@@ -96,23 +96,45 @@ makeArtificialPenguin <- function(num,penguin){
 
 AdelineFemaleRepdata <- makeArtificialPenguin(1000,AdeliePenguinFemale)
 AdelineMaleRepdata <- makeArtificialPenguin(1000,AdeliePenguinMale)
+AdelineMaleRepdata <- AdelineMaleRepdata |> mutate(Species = "Adeline")
+AdelineFemaleRepdata <- AdelineFemaleRepdata |> mutate(Species = "Adeline")
+
 
 ChinstrapFemaleRepData <-makeArtificialPenguin(1000,ChinstrapPenguinFemale)
 ChinstrapMaleRepData <-makeArtificialPenguin(1000,ChinstrapPenguinMale)
+ChinstrapFemaleRepData <- ChinstrapFemaleRepData |> mutate(Species = "Chinstrap")
+ChinstrapMaleRepData <- ChinstrapMaleRepData |> mutate(Species = "Chinstrap")
+
 
 GentooFemaleRepData <-makeArtificialPenguin(1000,GentooPenguinFemale)
 GentooMaleRepData <-makeArtificialPenguin(1000,GentooPenguinMale)
+GentooFemaleRepData <- GentooFemaleRepData |> mutate(Species = "Gentoo")
+GentooMaleRepData <- GentooMaleRepData |> mutate(Species = "Gentoo")
+
+
+
 
 #note: in the data there is no species so must add species back into data 
-artificalData <- bind_rows(AdelineFemaleRepdata,AdeliePenguinMale,GentooFemaleRepData,GentooMaleRepData,ChinstrapFemaleRepData,ChinstrapMaleRepData)
+artificalData <- bind_rows(AdelineFemaleRepdata,AdelineMaleRepdata,GentooFemaleRepData,GentooMaleRepData,ChinstrapFemaleRepData,ChinstrapMaleRepData)
 
+artificalData <- artificalData |> drop_na()
 #Holy moly thats alot of data
-artificalData |> ggplot() + geom_dotplot(aes(`Body Mass (g)`, fill = Sex), binwidth = 20) +
-  labs(x ="Penguin Mass (G)", fill = "Sex")
+artificalData |> ggplot() + geom_dotplot(aes(`Body Mass (g)`, fill = Species), binwidth = 50) +
+  labs(x ="Penguin Mass (G)", fill = "Sex") + facet_grid(cols = vars(Sex))
+artificalData |> ggplot() + geom_boxplot(aes(`Body Mass (g)`, fill = Species)) +
+  labs(x ="Penguin Mass (G)", fill = "Sex")+ facet_grid(cols = vars(Sex))
 
-artificalData |> ggplot() + geom_boxplot(aes(`Body Mass (g)`, fill = Sex)) +
-  labs(x ="Penguin Mass (G)", fill = "Sex")
+artificalData |> ggplot() + geom_smooth(aes(`Body Mass (g)`,`Culmen Length (mm)`, fill = Species)) +
+  labs(x ="Penguin Mass (G)", fill = "Sex")+ facet_grid(cols = vars(Sex))
 
+artificalData |> ggplot() + geom_density(aes(`Body Mass (g)`, fill = Species)) +
+  labs(x ="Penguin Mass (G)", fill = "Sex")+ facet_grid(cols = vars(Sex))
 
+artificalData |> ggplot() + geom_polygon(aes(`Body Mass (g)`,`Culmen Length (mm)`, fill = Species)) +
+  labs(x ="Penguin Mass (G)", fill = "Sex")+ facet_grid(cols = vars(Sex))
 
+artificalData |> ggplot() + geom_violin(aes(`Body Mass (g)`,`Culmen Length (mm)`, fill = Species)) +
+  labs(x ="Penguin Mass (G)", fill = "Sex") +
+  facet_grid(cols =vars(Sex))
 
+summary(artificalData)
