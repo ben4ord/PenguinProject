@@ -1,4 +1,3 @@
-
 library(dimRed)
 library(ggplot2)
 library(Rtsne)
@@ -8,6 +7,9 @@ library(tidyverse)
 library(RSpectra)
 library(igraph)
 library(palmerpenguins)
+library(caret)
+library(nnet)
+library(MLmetrics)
 
 data <-penguins_raw
 data <- data |> select(Species,Island,`Culmen Length (mm)`,`Culmen Depth (mm)`,`Flipper Length (mm)`,`Body Mass (g)`,Sex)
@@ -65,7 +67,7 @@ selectPenguin <- function(penguin){
 }
 
 
-artificalPenguin <-function(penguin){
+artificialPenguin <-function(penguin){
   pen <- selectPenguin(penguin)
   #penguinData <- bind_rows(penguinData,data.frame(pen))
   pen
@@ -84,8 +86,8 @@ charToNum <- function(data){
 
 #function to make artificial penguins
 makeArtificialPenguin <- function(num,penguin){
-
-  artPenData <- replicate(num,artificalPenguin(penguin))
+  
+  artPenData <- replicate(num,artificialPenguin(penguin))
   artPenData <- matrix(unlist(artPenData),ncol =6,byrow = TRUE)
   artPenData <- as_tibble(artPenData) |> set_names(c("Island","Culmen Length (mm)","Culmen Depth (mm)","Flipper Length (mm)","Body Mass (g)","Sex"))
   artPenData <- as.data.frame(artPenData)
@@ -94,10 +96,10 @@ makeArtificialPenguin <- function(num,penguin){
   
 }
 
-AdelineFemaleRepdata <- makeArtificialPenguin(1000,AdeliePenguinFemale)
-AdelineMaleRepdata <- makeArtificialPenguin(1000,AdeliePenguinMale)
-AdelineMaleRepdata <- AdelineMaleRepdata |> mutate(Species = "Adeline")
-AdelineFemaleRepdata <- AdelineFemaleRepdata |> mutate(Species = "Adeline")
+AdelieFemaleRepdata <- makeArtificialPenguin(1000,AdeliePenguinFemale)
+AdelieMaleRepdata <- makeArtificialPenguin(1000,AdeliePenguinMale)
+AdelieMaleRepdata <- AdelieMaleRepdata |> mutate(Species = "Adelie")
+AdelieFemaleRepdata <- AdelieFemaleRepdata |> mutate(Species = "Adelie")
 
 
 ChinstrapFemaleRepData <-makeArtificialPenguin(1000,ChinstrapPenguinFemale)
@@ -112,29 +114,63 @@ GentooFemaleRepData <- GentooFemaleRepData |> mutate(Species = "Gentoo")
 GentooMaleRepData <- GentooMaleRepData |> mutate(Species = "Gentoo")
 
 
+artificialData <- bind_rows(artificialData, data)
 
 
 #note: in the data there is no species so must add species back into data 
-artificalData <- bind_rows(AdelineFemaleRepdata,AdelineMaleRepdata,GentooFemaleRepData,GentooMaleRepData,ChinstrapFemaleRepData,ChinstrapMaleRepData)
+artificialData <- bind_rows(AdelieFemaleRepdata,AdelieMaleRepdata,GentooFemaleRepData,GentooMaleRepData,ChinstrapFemaleRepData,ChinstrapMaleRepData)
 
-artificalData <- artificalData |> drop_na()
+artificialData <- artificialData |> drop_na()
 #Holy moly thats alot of data
-artificalData |> ggplot() + geom_dotplot(aes(`Body Mass (g)`, fill = Species), binwidth = 50) +
+
+artificialData |> ggplot() + geom_dotplot(aes(`Body Mass (g)`, fill = Species), binwidth = 50) +
   labs(x ="Penguin Mass (G)", fill = "Sex") + facet_grid(cols = vars(Sex))
-artificalData |> ggplot() + geom_boxplot(aes(`Body Mass (g)`, fill = Species)) +
+
+artificialData |> ggplot() + geom_boxplot(aes(`Body Mass (g)`, fill = Species)) +
   labs(x ="Penguin Mass (G)", fill = "Sex")+ facet_grid(cols = vars(Sex))
 
-artificalData |> ggplot() + geom_smooth(aes(`Body Mass (g)`,`Culmen Length (mm)`, fill = Species)) +
+artificialData |> ggplot() + geom_density(aes(`Body Mass (g)`, fill = Species)) +
   labs(x ="Penguin Mass (G)", fill = "Sex")+ facet_grid(cols = vars(Sex))
 
-artificalData |> ggplot() + geom_density(aes(`Body Mass (g)`, fill = Species)) +
-  labs(x ="Penguin Mass (G)", fill = "Sex")+ facet_grid(cols = vars(Sex))
-
-artificalData |> ggplot() + geom_polygon(aes(`Body Mass (g)`,`Culmen Length (mm)`, fill = Species)) +
-  labs(x ="Penguin Mass (G)", fill = "Sex")+ facet_grid(cols = vars(Sex))
-
-artificalData |> ggplot() + geom_violin(aes(`Body Mass (g)`,`Culmen Length (mm)`, fill = Species)) +
+artificialData |> ggplot() + geom_violin(aes(`Body Mass (g)`,`Culmen Length (mm)`, fill = Species)) +
   labs(x ="Penguin Mass (G)", fill = "Sex") +
   facet_grid(cols =vars(Sex))
 
-summary(artificalData)
+
+summary(artificialData)
+
+
+#PREDICTION USING MULTINOMIAL LOGISTIC REGRESSION
+
+model <- multinom(Species ~ `Body Mass (g)` + `Flipper Length (mm)` + `Culmen Depth (mm)` + `Culmen Length (mm)`, data = artificialData)
+
+predictions <- predict(model, newdata = artificialData, type = "class")
+
+# Compare predictions with actual values
+table(artificialData$Species, predictions)
+
+Accuracy(artificialData$Species, predictions)
+
+Precision(artificialData$Species, predictions)
+
+F1_Score(artificialData$Species, predictions)
+
+
+
+#Original plot based on body mass and species
+artificialData |> ggplot(aes(x = `Body Mass (g)`, y = Species, color = Species)) +
+  geom_jitter(width = 0.1, height = 0.1, size = 3) +
+  labs(title = "Penguin Species by Body Mass",
+       x = "Body Mass (g)", y = "Species") 
+
+
+# Add predictions to the dataset
+artificialData$predictions <- predict(model, newdata = artificialData, type = "class")
+
+# Plot actual vs predicted
+artificialData |> ggplot(aes(x = `Culmen Length (mm)`, y = Species, color = predictions)) +
+  geom_jitter(width = 0.1, height = 0.1, size = 3) +
+  labs(title = "Predicted vs Actual Penguin Species",
+       x = "Body Mass (g)", y = "Species",
+       color = "Predicted Species")
+
