@@ -1,4 +1,5 @@
 
+
 library(dimRed)
 library(ggplot2)
 library(Rtsne)
@@ -207,3 +208,31 @@ data |> ggplot(aes(x = `Culmen Length (mm)`, y = Species, color = predictions)) 
        color = "Predicted Species")
 
 
+
+#PREDICTING BASED ON SEX
+model <- multinom(Sex ~ `Body Mass (g)` + `Flipper Length (mm)` + `Culmen Depth (mm)` + `Culmen Length (mm)`, data = artificialData)
+
+predictions <- predict(model, newdata = artificialData, type = "class")
+
+
+Accuracy(artificialData$Sex, predictions)
+
+Precision(artificialData$Sex, predictions)
+
+F1_Score(artificialData$Sex, predictions)
+
+
+#Original plot based on body mass and Sex
+artificialData |> ggplot(aes(x = `Body Mass (g)`, y = Sex, color = Sex)) +
+  geom_jitter(width = 0.1, height = 0.1, size = 3) +
+  labs(title = "Penguin Sex by Body Mass",
+       x = "Body Mass (g)", y = "Sex") +
+  facet_grid(cols = vars(Species))
+
+#Plot actual vs predicted
+artificialData |> ggplot(aes(x = `Body Mass (g)`, y = Sex, color = predictions)) +
+  geom_jitter(width = 0.1, height = 0.1, size = 3) +
+  labs(title = "Predicted vs Actual Penguin Sex",
+       x = "Body Mass (g)", y = "Sex",
+       color = "Predicted Sex") +
+  facet_grid(cols = vars(Species))
