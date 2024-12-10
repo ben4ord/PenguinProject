@@ -1,3 +1,4 @@
+
 library(dimRed)
 library(ggplot2)
 library(Rtsne)
@@ -113,12 +114,9 @@ GentooMaleRepData <-makeArtificialPenguin(1000,GentooPenguinMale)
 GentooFemaleRepData <- GentooFemaleRepData |> mutate(Species = "Gentoo")
 GentooMaleRepData <- GentooMaleRepData |> mutate(Species = "Gentoo")
 
-
-artificialData <- bind_rows(artificialData, data)
-
-
 #note: in the data there is no species so must add species back into data 
 artificialData <- bind_rows(AdelieFemaleRepdata,AdelieMaleRepdata,GentooFemaleRepData,GentooMaleRepData,ChinstrapFemaleRepData,ChinstrapMaleRepData)
+artificialData <- bind_rows(artificialData)
 
 artificialData <- artificialData |> drop_na()
 #Holy moly thats alot of data
@@ -140,20 +138,20 @@ artificialData |> ggplot() + geom_violin(aes(`Body Mass (g)`,`Culmen Length (mm)
 summary(artificialData)
 
 
-#PREDICTION USING MULTINOMIAL LOGISTIC REGRESSION
+#PREDICTION USING MULTINOMIAL LOGISTIC REGRESSION ON ARTIFICIAL DATA
 
 model <- multinom(Species ~ `Body Mass (g)` + `Flipper Length (mm)` + `Culmen Depth (mm)` + `Culmen Length (mm)`, data = artificialData)
 
-predictions <- predict(model, newdata = artificialData, type = "class")
+predictions <- predict(model, newdata = data, type = "class")
 
 # Compare predictions with actual values
-table(artificialData$Species, predictions)
+table(data$Species, predictions)
 
-Accuracy(artificialData$Species, predictions)
+Accuracy(data$Species, predictions)
 
-Precision(artificialData$Species, predictions)
+Precision(data$Species, predictions)
 
-F1_Score(artificialData$Species, predictions)
+F1_Score(data$Species, predictions)
 
 
 
@@ -173,4 +171,39 @@ artificialData |> ggplot(aes(x = `Culmen Length (mm)`, y = Species, color = pred
   labs(title = "Predicted vs Actual Penguin Species",
        x = "Body Mass (g)", y = "Species",
        color = "Predicted Species")
+
+#PREDICTION USING MULTINOMIAL LOGISTIC REGRESSION ON ORGINIAL DATA
+
+model <- multinom(Species ~ `Body Mass (g)` + `Flipper Length (mm)` + `Culmen Depth (mm)` + `Culmen Length (mm)`, data = data)
+
+predictions <- predict(model, newdata = artificialData, type = "class")
+
+# Compare predictions with actual values
+table(artificialData$Species, predictions)
+
+Accuracy(artificialData$Species, predictions)
+
+Precision(artificialData$Species, predictions)
+
+F1_Score(artificialData$Species, predictions)
+
+
+
+#Original plot based on body mass and species
+data |> ggplot(aes(x = `Body Mass (g)`, y = Species, color = Species)) +
+  geom_jitter(width = 0.1, height = 0.1, size = 3) +
+  labs(title = "Penguin Species by Body Mass",
+       x = "Body Mass (g)", y = "Species") 
+
+
+# Add predictions to the dataset
+data$predictions <- predict(model, newdata = data, type = "class")
+
+# Plot actual vs predicted
+data |> ggplot(aes(x = `Culmen Length (mm)`, y = Species, color = predictions)) +
+  geom_jitter(width = 0.1, height = 0.1, size = 3) +
+  labs(title = "Predicted vs Actual Penguin Species",
+       x = "Body Mass (g)", y = "Species",
+       color = "Predicted Species")
+
 
