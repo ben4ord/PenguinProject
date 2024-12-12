@@ -1,3 +1,6 @@
+
+
+
 library(dimRed)
 library(ggplot2)
 library(Rtsne)
@@ -24,8 +27,9 @@ GentooPenguin <- data |> filter(Species == "Gentoo") |> select(-Species)
 
 #Body Mass by Species
 
-ggplot() + geom_dotplot(aes(data$`Body Mass (g)`, fill = data$Species), binwidth = 125) +
-  labs(x ="Penguin Mass (G)", fill = "Species")
+data |> ggplot() + geom_dotplot(aes(`Body Mass (g)`, fill = Species), binwidth = 125) +
+  labs(x ="Penguin Mass (G)", color = "Species") + 
+  scale_fill_manual(values=c("#b2b2b2", "#7854ff", "#ffa53f"))
 
 #breaking up penguins by gender
 AdeliePenguinFemale <- AdeliePenguin |> filter(Sex == "FEMALE")
@@ -115,13 +119,22 @@ GentooMaleRepData <- GentooMaleRepData |> mutate(Species = "Gentoo")
 
 #note: in the data there is no species so must add species back into data 
 artificialData <- bind_rows(AdelieFemaleRepdata,AdelieMaleRepdata,GentooFemaleRepData,GentooMaleRepData,ChinstrapFemaleRepData,ChinstrapMaleRepData)
-artificialData <- bind_rows(artificialData)
+artificialData <- bind_rows(artificialData) 
 
 artificialData <- artificialData |> drop_na()
 #Holy moly thats alot of data
 
-artificialData |> ggplot() + geom_dotplot(aes(`Body Mass (g)`, fill = Species), binwidth = 50) +
-  labs(x ="Penguin Mass (G)", fill = "Sex") + facet_grid(cols = vars(Sex))
+artificialData |> ggplot() + geom_dotplot(aes(`Body Mass (g)`, fill = Species), binwidth = 45) +
+  labs(x ="Penguin Mass (G)", fill = "Sex") +  facet_grid(cols = vars(Sex))  + 
+  scale_fill_manual(values=c("#ff3131", "#7854ff", "#ffa53f"))
+
+artificialData |> ggplot() + geom_dotplot(aes(`Culmen Length (mm)`, fill = Species), binwidth = 0.34) +
+  labs(x ="Penguin Beak Length (mm)", fill = "Sex") +  facet_grid(cols = vars(Sex))  + 
+  scale_fill_manual(values=c("#ff3131", "#7854ff", "#ffa53f"))
+
+artificialData |> ggplot() + geom_dotplot(aes(`Flipper Length (mm)`, fill = Species), binwidth = .6) +
+  labs(x ="Flipper Length (mm)", fill = "Sex") +  facet_grid(cols = vars(Sex))  + 
+  scale_fill_manual(values=c("#ff3131", "#7854ff", "#ffa53f"))
 
 artificialData |> ggplot() + geom_boxplot(aes(`Body Mass (g)`, fill = Species)) +
   labs(x ="Penguin Mass (G)", fill = "Sex")+ facet_grid(cols = vars(Sex))
@@ -156,9 +169,24 @@ F1_Score(data$Species, predictions)
 
 #Original plot based on body mass and species
 artificialData |> ggplot(aes(x = `Body Mass (g)`, y = Species, color = Species)) +
-  geom_jitter(width = 0.1, height = 0.1, size = 1) +
+  geom_jitter(width = 0.1, height = 0.1, size = 3) +
   labs(title = "Penguin Species by Body Mass",
-       x = "Body Mass (g)", y = "Species") 
+       x = "Body Mass (g)", y = "Species") + 
+  scale_color_manual(values=c("#ff3131", "#7854ff", "#ffa53f"))
+
+#original plot bases on Culmen length of species
+artificialData |> ggplot(aes(x = `Culmen Length (mm)`, y = Species, color = Species)) +
+  geom_jitter(width = 0.1, height = 0.1, size = 3) +
+  labs(title = "Penguin Species by Culmen Length",
+       x = "Culmen Length (mm)", y = "Species") + 
+  scale_color_manual(values=c("#ff3131", "#7854ff", "#ffa53f"))
+
+#original plot bases on Flipper length of species
+artificialData |> ggplot(aes(x = `Flipper Length (mm)`, y = Species, color = Species)) +
+  geom_jitter(width = 0.1, height = 0.1, size = 3) +
+  labs(title = "Penguin Species by Flipper Length",
+       x = "Flipper Length (mm)", y = "Species") + 
+  scale_color_manual(values=c("#ff3131", "#7854ff", "#ffa53f"))
 
 
 # Add predictions to the dataset
@@ -166,10 +194,26 @@ artificialData$predictions <- predict(model, newdata = artificialData, type = "c
 
 # Plot actual vs predicted
 artificialData |> ggplot(aes(x = `Culmen Length (mm)`, y = Species, color = predictions)) +
-  geom_jitter(width = 1, height = 0.4, size = 1) +
+  geom_jitter(width = 0.3, height = 0.3, size = .6) +
+  labs(title = "Predicted vs Actual Penguin Species",
+       x = "Culmen Length (mm)", y = "Species",
+       color = "Predicted Species")  + 
+  scale_color_manual(values=c("#ff3131", "#7854ff", "#ffa53f"))
+
+artificialData |> ggplot(aes(x = `Flipper Length (mm)`, y = Species, color = predictions)) +
+  geom_jitter(width = 0.3, height = 0.3, size = .6) +
+  labs(title = "Predicted vs Actual Penguin Species",
+       x = "Flipper Length (mm)", y = "Species",
+       color = "Predicted Species")  + 
+  scale_color_manual(values=c("#ff3131", "#7854ff", "#ffa53f"))
+
+artificialData |> ggplot(aes(x = `Body Mass (g)`, y = Species, color = predictions)) +
+  geom_jitter(width = 0.3, height = 0.3, size = .6) +
   labs(title = "Predicted vs Actual Penguin Species",
        x = "Body Mass (g)", y = "Species",
-       color = "Predicted Species")
+       color = "Predicted Species")  + 
+  scale_color_manual(values=c("#ff3131", "#7854ff", "#ffa53f"))
+
 
 #PREDICTION USING MULTINOMIAL LOGISTIC REGRESSION ON ORGINIAL DATA
 
@@ -190,7 +234,7 @@ F1_Score(artificialData$Species, predictions)
 
 #Original plot based on body mass and species
 data |> ggplot(aes(x = `Body Mass (g)`, y = Species, color = Species)) +
-  geom_jitter(width = 0.1, height = 0.1, size = 1) +
+  geom_jitter(width = 0.1, height = 0.1, size = 3) +
   labs(title = "Penguin Species by Body Mass",
        x = "Body Mass (g)", y = "Species") 
 
@@ -199,11 +243,26 @@ data |> ggplot(aes(x = `Body Mass (g)`, y = Species, color = Species)) +
 data$predictions <- predict(model, newdata = data, type = "class")
 
 # Plot actual vs predicted
-data |> ggplot(aes(x = `Culmen Length (mm)`, y = Species, color = predictions)) +
-  geom_jitter(width = 0.1, height = 0.1, size = 1) +
+data |> ggplot(aes(x = `Body Mass (g)`, y = Species, color = predictions)) +
+  geom_jitter(width = 0.1, height = 0.1, size = 3) +
   labs(title = "Predicted vs Actual Penguin Species",
        x = "Body Mass (g)", y = "Species",
-       color = "Predicted Species")
+       color = "Predicted Species")+  
+  scale_color_manual(values=c("#ff3131", "#7854ff", "#ffa53f"))
+
+data |> ggplot(aes(x = `Culmen Length (mm)`, y = Species, color = predictions)) +
+  geom_jitter(width = 0.1, height = 0.1, size = 3) +
+  labs(title = "Predicted vs Actual Penguin Species",
+       x = "Culmen Length (mm)", y = "Species",
+       color = "Predicted Species")+ 
+  scale_color_manual(values=c("#ff3131", "#7854ff", "#ffa53f"))
+
+data |> ggplot(aes(x = `Flipper Length (mm)`, y = Species, color = predictions)) +
+  geom_jitter(width = 0.1, height = 0.1, size = 3) +
+  labs(title = "Predicted vs Actual Penguin Species",
+       x = "Flipper Length (mm)", y = "Species",
+       color = "Predicted Species")+ 
+  scale_color_manual(values=c("#ff3131", "#7854ff", "#ffa53f"))
 
 
 
@@ -222,16 +281,19 @@ F1_Score(artificialData$Sex, predictions)
 
 #Original plot based on body mass and Sex
 artificialData |> ggplot(aes(x = `Body Mass (g)`, y = Sex, color = Species)) +
-  geom_jitter(width = 0.1, height = 0.5, size = 1) +
+  geom_jitter(width = 0.1, height = 0.1, size = 3) +
   labs(title = "Penguin Sex by Body Mass",
-       x = "Body Mass (g)", y = "Sex") +
-  facet_grid(cols = vars(Species))
+       x = "Body Mass (g)", y = "Sex",
+       color = "Sex") +
+  facet_grid(cols = vars(Species)) + 
+  scale_color_manual(values=c("#ff3131", "#7854ff", "#ffa53f"))
 
 #Plot actual vs predicted
 artificialData |> ggplot(aes(x = `Body Mass (g)`, y = Sex, color = predictions)) +
-  geom_jitter(width = .1, height = 0.5, size = 1) +
+  geom_jitter(width = 0.3, height = 0.3, size = 1) +
   labs(title = "Predicted vs Actual Penguin Sex",
        x = "Body Mass (g)", y = "Sex",
        color = "Predicted Sex") +
-  facet_grid(cols = vars(Species))
+  facet_grid(cols = vars(Species)) + 
+  scale_color_manual(values=c("#ff3131", "#7854ff", "#ffa53f"))
 
