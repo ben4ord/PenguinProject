@@ -1,4 +1,3 @@
-
 library(ggplot2)
 library(Rtsne)
 library(RANN)
@@ -46,9 +45,9 @@ GentooPenguinMale <- GentooPenguin |> filter(Sex == "MALE")
 #-------------------------------------------------------------------------------------
 #Function [selectPenguin]
 
-  #Purpose:   This function creates and artificial penguin by sampling from a data set
+#Purpose:   This function creates and artificial penguin by sampling from a data set
 #             It allows us to create a new penguin with reasonable data points
-  
+
 
 #  Parameters:
 #      penguin -- this penguin parater is what penguin you want to artifically create.
@@ -180,80 +179,59 @@ artificialData |> ggplot() + geom_violin(aes(`Body Mass (g)`,`Culmen Length (mm)
 summary(artificialData)
 
 
-#PREDICTION USING MULTINOMIAL LOGISTIC REGRESSION ON ARTIFICIAL DATA
 
-model <- multinom(Species ~ `Body Mass (g)` + `Flipper Length (mm)` + `Culmen Depth (mm)` + `Culmen Length (mm)`, data = artificialData)
 
-predictions <- predict(model, newdata = data, type = "class")
+
+#PREDICTION USING MULTINOMIAL LOGISTIC REGRESSION ON Artificial Data
+
+model <- multinom(Species ~ `Body Mass (g)` + `Flipper Length (mm)` + 
+                    `Culmen Depth (mm)` + `Culmen Length (mm)`, data = data)
+
+art_predictions <- predict(model, newdata = artificialData, type = "class")
 
 # Compare predictions with actual values
 #Creating a dataframe to store the table (shows the actual vs predicted outcomes)
-art_table <- data.frame(table(data$Species, predictions)) |>
+art_table <- data.frame(table(artificialData$Species, art_predictions)) |>
   rename(Actual = Var1)
 art_table <- art_table |>
-  pivot_wider(names_from = predictions, values_from = Freq, values_fill = 0)
+  pivot_wider(names_from = art_predictions, values_from = Freq, values_fill = 0)
 
 art_table
 
-#Finding the metrics for our prediction data
-art_accuracy <- Accuracy(data$Species, predictions)
+#Metrics for our predicted data
+art_accuracy <- Accuracy(artificialData$Species, art_predictions)
 
-art_precision <- Precision(data$Species, predictions)
+art_precision <- Precision(artificialData$Species, art_predictions)
 
-art_f1 <- F1_Score(data$Species, predictions)
+art_f1 <- F1_Score(artificialData$Species, art_predictions)
 
-#Creating a dataframe to store this data
+#Creating a dataframe to store the metrics
 art_metrics_df <- data.frame(
   Dataset = "Artificial Data",
+  "Num Data Points" = nrow(artificialData),
   Accuracy = art_accuracy,
   Precision = art_precision,
-  `F1 Score` = art_f1
+  "F1 Score" = art_f1,
+  check.names = FALSE #Found this online to remove the . between the words in my column names
 )
 
-#View the result
 art_metrics_df
+
+
+
+# Add predictions to the dataset
+artificialData$art_predictions <- predict(model, newdata = artificialData, type = "class")
+
 
 #Original plot based on body mass and species
 artificialData |> ggplot(aes(x = `Body Mass (g)`, y = Species, color = Species)) +
-  geom_jitter(width = 0.1, height = 0.1, size = 3) +
+  geom_jitter(width = 0.3, height = 0.3, size = .6) +
   labs(title = "Penguin Species by Body Mass",
        x = "Body Mass (g)", y = "Species") + 
   scale_color_manual(values=c("#ff3131", "#7854ff", "#ffa53f"))
 
-#original plot bases on Culmen length of species
-artificialData |> ggplot(aes(x = `Culmen Length (mm)`, y = Species, color = Species)) +
-  geom_jitter(width = 0.1, height = 0.1, size = 3) +
-  labs(title = "Penguin Species by Culmen Length",
-       x = "Culmen Length (mm)", y = "Species") + 
-  scale_color_manual(values=c("#ff3131", "#7854ff", "#ffa53f"))
-
-#original plot bases on Flipper length of species
-artificialData |> ggplot(aes(x = `Flipper Length (mm)`, y = Species, color = Species)) +
-  geom_jitter(width = 0.1, height = 0.1, size = 3) +
-  labs(title = "Penguin Species by Flipper Length",
-       x = "Flipper Length (mm)", y = "Species") + 
-  scale_color_manual(values=c("#ff3131", "#7854ff", "#ffa53f"))
-
-
-# Add predictions to the dataset
-artificialData$predictions <- predict(model, newdata = artificialData, type = "class")
-
-# Plot actual vs predicted
-artificialData |> ggplot(aes(x = `Culmen Length (mm)`, y = Species, color = predictions)) +
-  geom_jitter(width = 0.3, height = 0.3, size = .6) +
-  labs(title = "Predicted vs Actual Penguin Species",
-       x = "Culmen Length (mm)", y = "Species",
-       color = "Predicted Species")  + 
-  scale_color_manual(values=c("#ff3131", "#7854ff", "#ffa53f"))
-
-artificialData |> ggplot(aes(x = `Flipper Length (mm)`, y = Species, color = predictions)) +
-  geom_jitter(width = 0.3, height = 0.3, size = .6) +
-  labs(title = "Predicted vs Actual Penguin Species",
-       x = "Flipper Length (mm)", y = "Species",
-       color = "Predicted Species")  + 
-  scale_color_manual(values=c("#ff3131", "#7854ff", "#ffa53f"))
-
-artificialData |> ggplot(aes(x = `Body Mass (g)`, y = Species, color = predictions)) +
+#Actual vs Predicted
+artificialData |> ggplot(aes(x = `Body Mass (g)`, y = Species, color = art_predictions)) +
   geom_jitter(width = 0.3, height = 0.3, size = .6) +
   labs(title = "Predicted vs Actual Penguin Species",
        x = "Body Mass (g)", y = "Species",
@@ -261,71 +239,135 @@ artificialData |> ggplot(aes(x = `Body Mass (g)`, y = Species, color = predictio
   scale_color_manual(values=c("#ff3131", "#7854ff", "#ffa53f"))
 
 
-#PREDICTION USING MULTINOMIAL LOGISTIC REGRESSION ON ORGINIAL DATA
 
-model <- multinom(Species ~ `Body Mass (g)` + `Flipper Length (mm)` + `Culmen Depth (mm)` + `Culmen Length (mm)`, data = data)
+#original plot bases on Culmen length of species
+artificialData |> ggplot(aes(x = `Culmen Length (mm)`, y = Species, color = Species)) +
+  geom_jitter(width = 0.3, height = 0.3, size = .6) +
+  labs(title = "Penguin Species by Culmen Length",
+       x = "Culmen Length (mm)", y = "Species") + 
+  scale_color_manual(values=c("#ff3131", "#7854ff", "#ffa53f"))
 
-predictions <- predict(model, newdata = artificialData, type = "class")
+#Actual vs predicted
+artificialData |> ggplot(aes(x = `Culmen Length (mm)`, y = Species, color = art_predictions)) +
+  geom_jitter(width = 0.3, height = 0.3, size = .6) +
+  labs(title = "Predicted vs Actual Penguin Species",
+       x = "Culmen Length (mm)", y = "Species",
+       color = "Predicted Species")  + 
+  scale_color_manual(values=c("#ff3131", "#7854ff", "#ffa53f"))
+
+
+
+#original plot bases on Flipper length of species
+artificialData |> ggplot(aes(x = `Flipper Length (mm)`, y = Species, color = Species)) +
+  geom_jitter(width = 0.3, height = 0.3, size = .6) +
+  labs(title = "Penguin Species by Flipper Length",
+       x = "Flipper Length (mm)", y = "Species") + 
+  scale_color_manual(values=c("#ff3131", "#7854ff", "#ffa53f"))
+
+#Actual vs Predicted
+artificialData |> ggplot(aes(x = `Flipper Length (mm)`, y = Species, color = art_predictions)) +
+  geom_jitter(width = 0.3, height = 0.3, size = .6) +
+  labs(title = "Predicted vs Actual Penguin Species",
+       x = "Flipper Length (mm)", y = "Species",
+       color = "Predicted Species")  + 
+  scale_color_manual(values=c("#ff3131", "#7854ff", "#ffa53f"))
+
+
+
+
+
+
+#PREDICTION USING MULTINOMIAL LOGISTIC REGRESSION ON Original Data
+
+model <- multinom(Species ~ `Body Mass (g)` + `Flipper Length (mm)` + 
+                    `Culmen Depth (mm)` + `Culmen Length (mm)`, data = artificialData)
+
+orig_predictions <- predict(model, newdata = data, type = "class")
 
 # Compare predictions with actual values
 #Creating a dataframe to store the table (shows the actual vs predicted outcomes)
-orig_table <- data.frame(table(artificialData$Species, predictions)) |>
+orig_table <- data.frame(table(data$Species, orig_predictions)) |>
   rename(Actual = Var1)
 orig_table <- orig_table |>
-  pivot_wider(names_from = predictions, values_from = Freq, values_fill = 0)
+  pivot_wider(names_from = orig_predictions, values_from = Freq, values_fill = 0)
 
 orig_table
 
-#Metrics for our predicted data
-orig_accuracy <- Accuracy(artificialData$Species, predictions)
+#Finding the metrics for our prediction data
+orig_accuracy <- Accuracy(data$Species, orig_predictions)
 
-orig_precision <- Precision(artificialData$Species, predictions)
+orig_precision <- Precision(data$Species, orig_predictions)
 
-orig_f1 <- F1_Score(artificialData$Species, predictions)
+orig_f1 <- F1_Score(data$Species, orig_predictions)
 
-#Creating a dataframe to store the metrics
+#Creating a dataframe to store this data
 orig_metrics_df <- data.frame(
-  Dataset = "Real Data",
+  Dataset = "Original Data",
+  "Num Data Points" = nrow(data),
   Accuracy = orig_accuracy,
   Precision = orig_precision,
-  `F1 Score` = orig_f1
+  "F1 Score" = orig_f1,
+  check.names = FALSE #Found this online to remove the . between the words in my column names
 )
 
+#View the result
+orig_metrics_df
+
 # Add to the existing art_metrics data frame
-combined_metrics_df <- bind_rows(art_metrics_df, orig_metrics_df)
+combined_metrics_df <- bind_rows(orig_metrics_df, art_metrics_df)
 
 # View result to compare results from the metrics
 combined_metrics_df
 
 
-
-#Original plot based on body mass and species
-data |> ggplot(aes(x = `Body Mass (g)`, y = Species, color = Species)) +
-  geom_jitter(width = 0.1, height = 0.1, size = 3) +
-  labs(title = "Penguin Species by Body Mass",
-       x = "Body Mass (g)", y = "Species") 
-
-
 # Add predictions to the dataset
 data$predictions <- predict(model, newdata = data, type = "class")
 
+
+#Original plot based on body mass and species
+data |> ggplot(aes(x = `Body Mass (g)`, y = Species, color = Species)) +
+  geom_jitter(width = 0.3, height = 0.3, size = 2) +
+  labs(title = "Penguin Species by Body Mass",
+       x = "Body Mass (g)", y = "Species")+
+  scale_color_manual(values=c("#ff3131", "#7854ff", "#ffa53f"))
+
 # Plot actual vs predicted
 data |> ggplot(aes(x = `Body Mass (g)`, y = Species, color = predictions)) +
-  geom_jitter(width = 0.1, height = 0.1, size = 3) +
+  geom_jitter(width = 0.3, height = 0.3, size = 2) +
   labs(title = "Predicted vs Actual Penguin Species",
        x = "Body Mass (g)", y = "Species",
        color = "Predicted Species")+  
   scale_color_manual(values=c("#ff3131", "#7854ff", "#ffa53f"))
 
+
+
+#original data for culmen length
+data |> ggplot(aes(x = `Culmen Length (mm)`, y = Species, color = Species)) +
+  geom_jitter(width = 0.3, height = 0.3, size = 2) +
+  labs(title = "Penguin Species by Body Mass",
+       x = "Body Mass (g)", y = "Species")+
+  scale_color_manual(values=c("#ff3131", "#7854ff", "#ffa53f"))
+
+#Actual vs Predicted
 data |> ggplot(aes(x = `Culmen Length (mm)`, y = Species, color = predictions)) +
-  geom_jitter(width = 0.1, height = 0.1, size = 3) +
+  geom_jitter(width = 0.3, height = 0.3, size = 2) +
   labs(title = "Predicted vs Actual Penguin Species",
        x = "Culmen Length (mm)", y = "Species",
        color = "Predicted Species")+ 
   scale_color_manual(values=c("#ff3131", "#7854ff", "#ffa53f"))
 
+
+
+#Original data for flipper length
+data |> ggplot(aes(x = `Flipper Length (mm)`, y = Species, color = Species)) +
+  geom_jitter(width = 0.3, height = 0.3, size = 2) +
+  labs(title = "Penguin Species by Body Mass",
+       x = "Body Mass (g)", y = "Species")+
+  scale_color_manual(values=c("#ff3131", "#7854ff", "#ffa53f"))
+
+#Actual vs Predicted
 data |> ggplot(aes(x = `Flipper Length (mm)`, y = Species, color = predictions)) +
-  geom_jitter(width = 0.1, height = 0.1, size = 3) +
+  geom_jitter(width = 0.3, height = 0.3, size = 2) +
   labs(title = "Predicted vs Actual Penguin Species",
        x = "Flipper Length (mm)", y = "Species",
        color = "Predicted Species")+ 
@@ -333,34 +375,55 @@ data |> ggplot(aes(x = `Flipper Length (mm)`, y = Species, color = predictions))
 
 
 
-#PREDICTING BASED ON SEX
+
+
+#PREDICTING BASED ON SEX for Artificial Data
 model <- multinom(Sex ~ `Body Mass (g)` + `Flipper Length (mm)` + `Culmen Depth (mm)` + `Culmen Length (mm)`, data = artificialData)
 
-predictions <- predict(model, newdata = artificialData, type = "class")
+sex_predictions <- predict(model, newdata = artificialData, type = "class")
 
 
-Accuracy(artificialData$Sex, predictions)
+sex_accuracy <- Accuracy(artificialData$Sex, sex_predictions)
 
-Precision(artificialData$Sex, predictions)
+sex_precision <- Precision(artificialData$Sex, sex_predictions)
 
-F1_Score(artificialData$Sex, predictions)
+sex_f1 <- F1_Score(artificialData$Sex, sex_predictions)
+
+#Creating a dataframe to store the metrics
+sex_metrics_df <- data.frame(
+  Dataset = "Sex Data",
+  Accuracy = sex_accuracy,
+  Precision = sex_precision,
+  `F1 Score` = sex_f1
+)
+
+sex_metrics_df
+
+# Add to the existing art_metrics data frame
+combined_metrics_df <- bind_rows(combined_metrics_df, sex_metrics_df)
+
+# View result to compare results from the metrics
+combined_metrics_df
+
+
+# Add predictions to the dataset
+artificialData$sex_predictions <- predict(model, newdata = artificialData, type = "class")
 
 
 #Original plot based on body mass and Sex
-artificialData |> ggplot(aes(x = `Body Mass (g)`, y = Sex, color = Species)) +
-  geom_jitter(width = 0.1, height = 0.1, size = 3) +
+artificialData |> ggplot(aes(x = `Body Mass (g)`, y = Sex, color = Sex)) +
+  geom_jitter(width = 0.3, height = 0.3, size = .6) +
   labs(title = "Penguin Sex by Body Mass",
        x = "Body Mass (g)", y = "Sex",
        color = "Sex") +
   facet_grid(cols = vars(Species)) + 
-  scale_color_manual(values=c("#ff3131", "#7854ff", "#ffa53f"))
+  scale_color_manual(values=c("#ff3131", "#7854ff"))
 
 #Plot actual vs predicted
-artificialData |> ggplot(aes(x = `Body Mass (g)`, y = Sex, color = predictions)) +
-  geom_jitter(width = 0.3, height = 0.3, size = 1) +
+artificialData |> ggplot(aes(x = `Body Mass (g)`, y = Sex, color = sex_predictions)) +
+  geom_jitter(width = 0.3, height = 0.3, size = .6) +
   labs(title = "Predicted vs Actual Penguin Sex",
        x = "Body Mass (g)", y = "Sex",
        color = "Predicted Sex") +
   facet_grid(cols = vars(Species)) + 
-  scale_color_manual(values=c("#ff3131", "#7854ff", "#ffa53f"))
-
+  scale_color_manual(values=c("#ff3131", "#7854ff"))
