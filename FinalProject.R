@@ -1,11 +1,6 @@
 library(ggplot2)
-library(Rtsne)
-library(RANN)
-library(Iso)
 library(tidyverse)
-library(RSpectra)
 library(palmerpenguins)
-library(caret)
 library(nnet)
 library(MLmetrics)
 
@@ -17,12 +12,19 @@ data <- data |> select(Species,Island,`Culmen Length (mm)`,`Culmen Depth (mm)`,`
 data <- data |> drop_na()
 data <- data |> mutate(Species = str_replace(Species, " .*",""))
 
+write.csv(data, "data.csv")
+
 #seperating species
 AdeliePenguin <- data |> filter(Species == "Adelie") |> select(-Species)
 
 ChinstrapPenguin <- data |> filter(Species == "Chinstrap") |> select(-Species)
 
 GentooPenguin <- data |> filter(Species == "Gentoo") |> select(-Species)
+
+write.csv(AdeliePenguin, "AdeliePenguin.csv")
+write.csv(ChinstrapPenguin, "ChinstrapPenguin.csv")
+write.csv(GentooPenguin, "GentooPenguin.csv")
+
 
 #Body Mass by Species
 
@@ -39,6 +41,17 @@ ChinstrapPenguinMale <- ChinstrapPenguin |> filter(Sex == "MALE")
 
 GentooPenguinFemale <- GentooPenguin |> filter(Sex == "FEMALE")
 GentooPenguinMale <- GentooPenguin |> filter(Sex == "MALE")
+
+write.csv(AdeliePenguinFemale, "AdeliePenguinFemale.csv")
+write.csv(AdeliePenguinMale, "AdeliePenguinMale.csv")
+
+write.csv(ChinstrapPenguinFemale, "ChinstrapPenguinFemale.csv")
+write.csv(ChinstrapPenguinMale, "ChinstrapPenguinMale.csv")
+
+write.csv(GentooPenguinFemale, "GentooPenguinFemale.csv")
+write.csv(GentooPenguinMale, "GentooPenguinMale.csv")
+
+
 
 
 #Creating artificial Penguin :)
@@ -134,11 +147,19 @@ AdelieMaleRepdata <- makeArtificialPenguin(1000,AdeliePenguinMale)
 AdelieMaleRepdata <- AdelieMaleRepdata |> mutate(Species = "Adelie")
 AdelieFemaleRepdata <- AdelieFemaleRepdata |> mutate(Species = "Adelie")
 
+write.csv(AdelieMaleRepdata, "AdelieMaleRepdata.csv")
+write.csv(AdelieFemaleRepdata, "AdelieFemaleRepdata.csv")
+
+
 
 ChinstrapFemaleRepData <-makeArtificialPenguin(1000,ChinstrapPenguinFemale)
 ChinstrapMaleRepData <-makeArtificialPenguin(1000,ChinstrapPenguinMale)
 ChinstrapFemaleRepData <- ChinstrapFemaleRepData |> mutate(Species = "Chinstrap")
 ChinstrapMaleRepData <- ChinstrapMaleRepData |> mutate(Species = "Chinstrap")
+
+write.csv(ChinstrapFemaleRepData, "ChinstrapFemaleRepData.csv")
+write.csv(ChinstrapMaleRepData, "ChinstrapMaleRepData.csv")
+
 
 
 GentooFemaleRepData <-makeArtificialPenguin(1000,GentooPenguinFemale)
@@ -146,11 +167,18 @@ GentooMaleRepData <-makeArtificialPenguin(1000,GentooPenguinMale)
 GentooFemaleRepData <- GentooFemaleRepData |> mutate(Species = "Gentoo")
 GentooMaleRepData <- GentooMaleRepData |> mutate(Species = "Gentoo")
 
+write.csv(GentooFemaleRepData, "GentooFemaleRepData.csv")
+write.csv(GentooMaleRepData, "GentooMaleRepData.csv")
+
+
 #binding all penguins back together 
 artificialData <- bind_rows(AdelieFemaleRepdata,AdelieMaleRepdata,GentooFemaleRepData,GentooMaleRepData,ChinstrapFemaleRepData,ChinstrapMaleRepData)
 artificialData <- bind_rows(artificialData) 
 
+
 artificialData <- artificialData |> drop_na()
+
+write.csv(artificialData, "artificialData.csv")
 #Holy moly thats alot of data
 
 artificialData |> ggplot() + geom_dotplot(aes(`Body Mass (g)`, fill = Species), binwidth = 45) +
@@ -222,6 +250,7 @@ art_metrics_df
 # Add predictions to the dataset
 artificialData$art_predictions <- predict(model, newdata = artificialData, type = "class")
 
+write.csv("artificialData.csv")
 
 #Original plot based on body mass and species
 artificialData |> ggplot(aes(x = `Body Mass (g)`, y = Species, color = Species)) +
@@ -318,12 +347,13 @@ combined_metrics_df <- bind_rows(orig_metrics_df, art_metrics_df)
 
 # View result to compare results from the metrics
 combined_metrics_df
+write.csv(combined_metrics_df, "combined_metrics_df.csv")
 
 
 # Add predictions to the dataset
 data$predictions <- predict(model, newdata = data, type = "class")
 
-
+write.csv(data,"data.csv")
 #Original plot based on body mass and species
 data |> ggplot(aes(x = `Body Mass (g)`, y = Species, color = Species)) +
   geom_jitter(width = 0.3, height = 0.3, size = 2) +
@@ -408,7 +438,7 @@ combined_metrics_df
 
 # Add predictions to the dataset
 artificialData$sex_predictions <- predict(model, newdata = artificialData, type = "class")
-
+write.csv(artificialData, "artificialData.csv")
 
 #Original plot based on body mass and Sex
 artificialData |> ggplot(aes(x = `Body Mass (g)`, y = Sex, color = Sex)) +
@@ -427,3 +457,4 @@ artificialData |> ggplot(aes(x = `Body Mass (g)`, y = Sex, color = sex_predictio
        color = "Predicted Sex") +
   facet_grid(cols = vars(Species)) + 
   scale_color_manual(values=c("#ff3131", "#7854ff"))
+
